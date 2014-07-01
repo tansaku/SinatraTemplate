@@ -1,0 +1,90 @@
+mkdir -p app/controllers/
+mkdir -p app/helpers/ 
+mkdir -p app/models/
+mkdir -p app/views/
+mkdir -p public/css/
+mkdir -p public/javascript/
+mkdir -p spec/
+
+echo "require 'sinatra'
+require 'data_mapper'
+require_relative 'models/model_template'
+require_relative 'controllers/controller_template'
+require_relative 'helpers/helpers_template'
+enable :sessions" >> app/server.rb
+
+echo "get '/' do
+  erb: index
+end" >> app/controllers/controller_template.rb
+
+echo "env = ENV[\"RACK_ENV\"] || \"development\"
+
+DataMapper.setup(:default, \"postgres://localhost/bookmark_manager_#{env}\")
+DataMapper.finalize" >> app/data_mapper_setup.rb 
+
+echo "helpers do
+
+end" >> app/helpers/helpers_template.rb
+
+echo "class Something
+
+end" >> app/models/model_template.rb
+
+echo "<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+	<link rel=\"stylesheet\" type=\"text/css\" href=\"/css/styles.css\">
+</head>
+<body>
+	
+</body>
+</html>" >> app/views/index.erb
+
+echo "require './app/server'
+
+run Sinatra::Application" >> config.ru
+
+touch public/css/styles.css
+
+echo "ENV[\"RACK_ENV\"] = 'test'
+
+require './app/server' 
+require 'database_cleaner'
+require 'capybara/rspec'
+
+Capybara.app = Sinatra::Application
+
+RSpec.configure do |config|
+  config.treat_symbols_as_metadata_keys_with_true_values = true
+  config.run_all_when_everything_filtered = true
+  config.filter_run :focus
+
+  config.order = 'random'
+
+  config.before(:suite) do
+    DatabaseCleaner.strategy = :transaction
+    DatabaseCleaner.clean_with(:truncation)
+  end
+
+  config.before(:each) do
+    DatabaseCleaner.start
+  end
+
+  config.after(:each) do
+    DatabaseCleaner.clean
+  end
+end" >> spec/spec_helper.rb
+
+echo "source 'https://rubygems.org'
+
+gem 'sinatra'
+gem 'data_mapper'
+gem 'dm-postgres-adapter'
+
+group :development, :test do
+  gem "rspec"
+	gem 'database_cleaner'
+	gem 'capybara'
+end" >> Gemfile
